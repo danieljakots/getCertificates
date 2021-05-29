@@ -101,4 +101,8 @@ func main() {
 		data += fmt.Sprint("\n-----END CERTIFICATE-----\n")
 		os.WriteFile(certFile, []byte(data), 0644)
 	}
+	err = conn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
