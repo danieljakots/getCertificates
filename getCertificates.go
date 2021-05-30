@@ -66,7 +66,6 @@ func main() {
 
 	conf := &tls.Config{ServerName: peerName}
 	conn := tls.Client(ipConn, conf)
-	defer conn.Close()
 
 	err = conn.Handshake()
 	if err != nil {
