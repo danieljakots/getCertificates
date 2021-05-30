@@ -72,37 +72,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	amount := len(conn.ConnectionState().PeerCertificates)
-	if amount != 2 {
-		log.Fatalf("Something wrong: expected 2 certificats, got %d\n", amount)
-	}
+	certs := make(map[bool]string, 2)
 
 	for _, cert := range conn.ConnectionState().PeerCertificates {
-		var certFile string
-		if cert.Subject.String() == "CN="+peerName {
-			certFile = leafPath
-		} else if cert.Subject.String() == "CN=R3,O=Let's Encrypt,C=US" && cert.IsCA {
-			certFile = intermediatePath
-		} else {
-			log.Println("The fuck you got there pal?")
-			log.Println(cert.Subject)
-			log.Fatalln(cert.IsCA)
-		}
-		data := fmt.Sprintf("-----BEGIN CERTIFICATE-----\n")
+		certs[cert.IsCA] += fmt.Sprintf("-----BEGIN CERTIFICATE-----\n")
 		i := 1
 		for _, char := range base64.StdEncoding.EncodeToString(cert.Raw) {
-			data += fmt.Sprintf("%c", char)
+			certs[cert.IsCA] += fmt.Sprintf("%c", char)
 			if i == 64 {
 				i = 0
-				data += fmt.Sprintf("\n")
+				certs[cert.IsCA] += fmt.Sprintf("\n")
 			}
 			i += 1
 		}
-		data += fmt.Sprint("\n-----END CERTIFICATE-----\n\n")
-		os.WriteFile(certFile, []byte(data), 0644)
+		certs[cert.IsCA] += fmt.Sprint("\n-----END CERTIFICATE-----\n\n")
 	}
 	err = conn.Close()
 	if err != nil {
 		log.Fatal(err)
+	}
+	for k, v := range certs {
+		var certFile string
+		if k {
+			certFile = intermediatePath
+		} else {
+			certFile = leafPath
+		}
+		os.WriteFile(certFile, []byte(v), 0644)
 	}
 }
