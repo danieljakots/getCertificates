@@ -76,7 +76,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	writeCertificates(certs, intermediatePath, leafPath)
+	err = writeCertificates(certs, intermediatePath, leafPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func asciiCertificates(certificates []*x509.Certificate) map[bool]string {
@@ -98,7 +101,7 @@ func asciiCertificates(certificates []*x509.Certificate) map[bool]string {
 	return certs
 }
 
-func writeCertificates(certs map[bool]string, intermediatePath, leafPath string) {
+func writeCertificates(certs map[bool]string, intermediatePath, leafPath string) error {
 	for k, v := range certs {
 		var certFile string
 		if k {
@@ -106,6 +109,10 @@ func writeCertificates(certs map[bool]string, intermediatePath, leafPath string)
 		} else {
 			certFile = leafPath
 		}
-		os.WriteFile(certFile, []byte(v), 0644)
+		err := os.WriteFile(certFile, []byte(v), 0644)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
