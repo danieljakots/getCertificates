@@ -22,6 +22,7 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"flag"
 	"fmt"
@@ -71,10 +72,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	certs := asciiCertificates(conn.ConnectionState().PeerCertificates)
+	err = conn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	writeCertificates(certs, intermediatePath, leafPath)
+}
 
+func asciiCertificates(certificates []*x509.Certificate) map[bool]string {
 	certs := make(map[bool]string, 2)
 
-	for _, cert := range conn.ConnectionState().PeerCertificates {
+	for _, cert := range certificates {
 		certs[cert.IsCA] += fmt.Sprintf("-----BEGIN CERTIFICATE-----\n")
 		i := 1
 		for _, char := range base64.StdEncoding.EncodeToString(cert.Raw) {
@@ -87,10 +96,10 @@ func main() {
 		}
 		certs[cert.IsCA] += fmt.Sprint("\n-----END CERTIFICATE-----\n\n")
 	}
-	err = conn.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return certs
+}
+
+func writeCertificates(certs map[bool]string, intermediatePath, leafPath string) {
 	for k, v := range certs {
 		var certFile string
 		if k {
