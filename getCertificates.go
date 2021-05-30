@@ -98,7 +98,7 @@ func main() {
 			}
 			i += 1
 		}
-		data += fmt.Sprint("\n-----END CERTIFICATE-----\n")
+		data += fmt.Sprint("\n-----END CERTIFICATE-----\n\n")
 		os.WriteFile(certFile, []byte(data), 0644)
 	}
 	err = conn.Close()
