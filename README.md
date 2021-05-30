@@ -1,6 +1,6 @@
 ## getCertificates
 
-This is used to get the certificates over a TCP. The DNS resolution can be
+This tool is used to get the certificates over TCP. The DNS resolution can be
 bypassed.
 
 ~~~
