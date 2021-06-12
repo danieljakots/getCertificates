@@ -86,17 +86,17 @@ func asciiCertificates(certificates []*x509.Certificate) map[bool]string {
 	certs := make(map[bool]string, 2)
 
 	for _, cert := range certificates {
-		certs[cert.IsCA] += fmt.Sprintf("-----BEGIN CERTIFICATE-----\n")
+		certs[cert.IsCA] += "-----BEGIN CERTIFICATE-----\n"
 		i := 1
 		for _, char := range base64.StdEncoding.EncodeToString(cert.Raw) {
 			certs[cert.IsCA] += fmt.Sprintf("%c", char)
 			if i == 64 {
 				i = 0
-				certs[cert.IsCA] += fmt.Sprintf("\n")
+				certs[cert.IsCA] += "\n"
 			}
 			i += 1
 		}
-		certs[cert.IsCA] += fmt.Sprint("\n-----END CERTIFICATE-----\n\n")
+		certs[cert.IsCA] += "\n-----END CERTIFICATE-----\n\n"
 	}
 	return certs
 }
