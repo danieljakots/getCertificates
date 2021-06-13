@@ -21,9 +21,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"log"
@@ -71,7 +72,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	certs := asciiCertificates(conn.ConnectionState().PeerCertificates)
+	certs, err := asciiCertificates(conn.ConnectionState().PeerCertificates)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = conn.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -82,23 +86,20 @@ func main() {
 	}
 }
 
-func asciiCertificates(certificates []*x509.Certificate) map[bool]string {
+func asciiCertificates(certificates []*x509.Certificate) (map[bool]string, error) {
 	certs := make(map[bool]string, 2)
-
 	for _, cert := range certificates {
-		certs[cert.IsCA] += "-----BEGIN CERTIFICATE-----\n"
-		i := 1
-		for _, char := range base64.StdEncoding.EncodeToString(cert.Raw) {
-			certs[cert.IsCA] += fmt.Sprintf("%c", char)
-			if i == 64 {
-				i = 0
-				certs[cert.IsCA] += "\n"
-			}
-			i += 1
+		buffy := new(bytes.Buffer)
+		err := pem.Encode(buffy, &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: cert.Raw,
+		})
+		if err != nil {
+			return nil, err
 		}
-		certs[cert.IsCA] += "\n-----END CERTIFICATE-----\n\n"
+		certs[cert.IsCA] += buffy.String()
 	}
-	return certs
+	return certs, nil
 }
 
 func writeCertificates(certs map[bool]string, intermediatePath, leafPath string) error {
