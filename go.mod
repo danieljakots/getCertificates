@@ -1,3 +1,3 @@
-module github.com/danieljakots/getCertificates
+module go.chown.me/getCertificates
 
 go 1.16
