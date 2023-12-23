@@ -16,10 +16,10 @@ LDFLAGS=-ldflags "-X main.COMMIT=${COMMIT} -X main.DATE=${TODAY}"
 all: fmt build test lint
 
 build:
-	go build ${LDFLAGS}
+	CGO_ENABLED=0 go build ${LDFLAGS}
 
 obsdbuild:
-	GOOS=openbsd GOARCH=amd64 go build ${LDFLAGS} -o ${TARGET}.obsd
+	CGO_ENABLED=0 GOOS=openbsd GOARCH=amd64 go build ${LDFLAGS} -o ${TARGET}.obsd
 
 clean:
 	rm -f ${TARGET}
@@ -44,6 +44,17 @@ testcovweb:
 	go tool cover -html=coverage.out
 	rm -f coverage.out
 
-lint:
-	golangci-lint run
+lint: staticcheck shadow
+
+ensure-shadow-installed:
+	@command -v shadow > /dev/null || go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
+shadow: ensure-shadow-installed
 	shadow ./...
+
+ensure-staticcheck-installed:
+	@command -v staticcheck > /dev/null || go install honnef.co/go/tools/cmd/staticcheck@latest
+staticcheck: ensure-staticcheck-installed
+	staticcheck ./...
+
+update-deps:
+	go get -u -t ./...
