@@ -33,33 +33,49 @@ import (
 	"time"
 )
 
-func cli() (string, string, string, string, int) {
-	leafPath := flag.String("leaf", "", "path to file for the leaf certificate")
-	intermediatePath := flag.String("intermediate", "", "file for the intermediate certificate")
+type Options struct {
+	Domain           string
+	IntermediatePath string
+	IP               string
+	LeafPath         string
+	Port             int
+}
+
+func cli() Options {
 	domain := flag.String("domain", "", "domain used in tls Handshake/SNI")
+	intermediatePath := flag.String("intermediate", "", "file for the intermediate certificate")
 	ip := flag.String("ip", "", "(Optional) IP address of the target host")
+	leafPath := flag.String("leaf", "", "path to file for the leaf certificate")
 	port := flag.Int("port", 443, "(Optional) TCP port of the target host")
 	flag.Parse()
 
-	if *leafPath == "" || *intermediatePath == "" || *domain == "" {
+	o := Options{
+		Domain:           *domain,
+		IntermediatePath: *intermediatePath,
+		IP:               *ip,
+		LeafPath:         *leafPath,
+		Port:             *port,
+	}
+
+	if o.LeafPath == "" || o.IntermediatePath == "" || o.Domain == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	return *leafPath, *intermediatePath, *domain, *ip, *port
+	return o
 }
 
 func main() {
-	leafPath, intermediatePath, domain, ip, port := cli()
-	peerName := domain
+	options := cli()
+	peerName := options.Domain
 	var server string
-	if ip != "" {
-		server = ip
+	if options.IP != "" {
+		server = options.IP
 	} else {
 		server = peerName
 	}
 
-	peer := fmt.Sprintf("%s:%d", server, port)
+	peer := fmt.Sprintf("%s:%d", server, options.Port)
 	ipConn, err := net.DialTimeout("tcp", peer, 10*time.Second)
 	if err != nil {
 		log.Fatal(err)
@@ -81,7 +97,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = writeCertificates(certs, intermediatePath, leafPath)
+	err = writeCertificates(certs, options.IntermediatePath, options.LeafPath)
 	if err != nil {
 		log.Fatal(err)
 	}
