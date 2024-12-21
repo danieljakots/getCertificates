@@ -33,11 +33,12 @@ import (
 	"time"
 )
 
-func cli() (string, string, string, string) {
+func cli() (string, string, string, string, int) {
 	leafPath := flag.String("leaf", "", "path to file for the leaf certificate")
 	intermediatePath := flag.String("intermediate", "", "file for the intermediate certificate")
 	domain := flag.String("domain", "", "domain used in tls Handshake/SNI")
 	ip := flag.String("ip", "", "(Optional) IP address of the target host")
+	port := flag.Int("port", 443, "(Optional) TCP port of the target host")
 	flag.Parse()
 
 	if *leafPath == "" || *intermediatePath == "" || *domain == "" {
@@ -45,11 +46,11 @@ func cli() (string, string, string, string) {
 		os.Exit(1)
 	}
 
-	return *leafPath, *intermediatePath, *domain, *ip
+	return *leafPath, *intermediatePath, *domain, *ip, *port
 }
 
 func main() {
-	leafPath, intermediatePath, domain, ip := cli()
+	leafPath, intermediatePath, domain, ip, port := cli()
 	peerName := domain
 	var server string
 	if ip != "" {
@@ -58,7 +59,7 @@ func main() {
 		server = peerName
 	}
 
-	peer := fmt.Sprintf("%s:443", server)
+	peer := fmt.Sprintf("%s:%d", server, port)
 	ipConn, err := net.DialTimeout("tcp", peer, 10*time.Second)
 	if err != nil {
 		log.Fatal(err)
