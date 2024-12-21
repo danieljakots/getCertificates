@@ -34,15 +34,18 @@ import (
 )
 
 type Options struct {
-	Domain           string
-	IntermediatePath string
-	IP               string
-	LeafPath         string
-	Port             int
+	Domain             string
+	InsecureSkipVerify bool
+	IntermediatePath   string
+	IP                 string
+	LeafPath           string
+	Port               int
 }
 
 func cli() Options {
 	domain := flag.String("domain", "", "domain used in tls Handshake/SNI")
+	insecureSkipVerify := flag.Bool("insecureSkipVerify", false,
+		"Skip certificate validation and accept any certificate presented by the server")
 	intermediatePath := flag.String("intermediate", "", "file for the intermediate certificate")
 	ip := flag.String("ip", "", "(Optional) IP address of the target host")
 	leafPath := flag.String("leaf", "", "path to file for the leaf certificate")
@@ -50,11 +53,12 @@ func cli() Options {
 	flag.Parse()
 
 	o := Options{
-		Domain:           *domain,
-		IntermediatePath: *intermediatePath,
-		IP:               *ip,
-		LeafPath:         *leafPath,
-		Port:             *port,
+		Domain:             *domain,
+		InsecureSkipVerify: *insecureSkipVerify,
+		IntermediatePath:   *intermediatePath,
+		IP:                 *ip,
+		LeafPath:           *leafPath,
+		Port:               *port,
 	}
 
 	if o.LeafPath == "" || o.IntermediatePath == "" || o.Domain == "" {
@@ -82,7 +86,7 @@ func main() {
 	}
 	defer ipConn.Close()
 
-	conf := &tls.Config{ServerName: peerName}
+	conf := &tls.Config{ServerName: peerName, InsecureSkipVerify: options.InsecureSkipVerify}
 	conn := tls.Client(ipConn, conf)
 
 	err = conn.Handshake()
